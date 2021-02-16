@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>iOS马甲包混淆方案 | 偷得浮生半日闲</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    
+      <link rel="icon" href="/favicon.png">
+    
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+<link rel="stylesheet" href="/js/google-code-prettify/tomorrow-night-eighties.min.css">
+
+
+  <meta name="generator" content="Hexo 5.3.0"></head>
+
+  <body>
+
+<header>
+	<a id="logo" href="/" title="偷得浮生半日闲">
+	<img src="/favicon.png" alt="偷得浮生半日闲"></a>
+	
+	
+		<!--搜索栏-->
+		<i class="js-toggle-search iconfont icon-search"></i>
+
+
+<form class="js-search search-form search-form--modal" method="get" action="http://gushi.li" role="search">
+	<div class="search-form__inner">
+		<div>
+			<i class="iconfont icon-search"></i>
+			<input class="text-input" placeholder="Enter Key..." type="search">
+		</div>
+	</div>
+</form>
+	
+
+	
+		<!--侧边导航栏-->
+		<a id="nav-toggle" href="#"><span></span></a>
+
+<nav>
+	<div class="menu-top-container">
+		<ul id="menu-top" class="menu">
+			
+				
+				<li class="current-menu-item">
+					<a href="https://github.com/JourneyYoung" target="_blank">Github</a>
+				</li>
+			
+		</ul>
+	</div>
+</nav>
+	
+
+</header>
+<div class="m-header ">
+	<section id="hero1" class="hero">
+		<div class="inner">
+		</div>
+	</section>
+	
+		<figure class="top-image" data-enable=true></figure>
+	
+</div>
+
+<!--文章列表-->
+<div class="wrapper">
+  
+    <!--文章-->
+<article>
+	
+  
+    <h1 class="post-title" itemprop="name">
+      iOS马甲包混淆方案
+    </h1>
+  
+
+	<div class='post-body mb'>
+		<p>马甲包对于一家公司的产品引流起到至关重要的作用。但是最近这段时间，苹果对于中国区的iOS开发者们要求很是严格，想必各位也吃到了苹果的2.1大礼包，满世界的寻找马甲包的混淆方案。</p>
+<h2 id="第一次被打回"><a href="#第一次被打回" class="headerlink" title="第一次被打回"></a>第一次被打回</h2><p>第一次被打回时，我们并没有意识到马甲包的问题有多严重，而且苹果给出的拒绝原因是我们的APP中包含敏感词汇，我们当时并没有往马甲包的方面去想，第一次被打回时，我们采用的方案是对敏感词汇进行base64+MD5的混合加密方案，然后就重新提包了。</p>
+<h2 id="第二次被打回"><a href="#第二次被打回" class="headerlink" title="第二次被打回"></a>第二次被打回</h2><p>这次苹果说的很明显了，而且他们机扫了我们的二进制文件，告诉我们API名称与我们之前的一个产品非常相像，而且那个产品并不是使用这个马甲包的开发者账号。我们猜测苹果可能针对APP做了数据库，会去比对方法名。<br>这一次我们代价比较大，由于之前没有考虑到这层，我们的API名称就是和系统方法命名方式保持一致，导致无法引入脚本来自动替换。我们花了三个开发，和6个小时，人工对我们自定义的API名称加上了特定前缀，如ab_xxx.这个思路主要是根据念茜大佬之前在微博上发布的API混淆加密方案。念茜的脚本是将需要混淆的API添加进文件，然后全局对所有需要加密的API字段进行混淆加密。我们在此基础上更新了脚本，可以自动抓取拥有我们前缀的API进行加密。但是这个方案在后面我们完全摒弃，所以在这里不详细往下说了。</p>
+<h2 id="第三次打回"><a href="#第三次打回" class="headerlink" title="第三次打回"></a>第三次打回</h2><p>第三次被打回已经惊动了老板，再想不出好的固化混淆方案我觉得差不多可以收拾东西了。这次苹果的拒绝原因更令人窒息，他说我们的API加密性质太明显，认为我们的APP一定藏有什么隐藏功能，还给我们吃了一张延迟审核的黄牌。经过我们一波分析之后，认为这几次被打回的经验中，苹果没有涉及到说我们的UI有什么相似的地方，所以，只要我们能把这个马甲包做到变成我们开发人员都认为是另一个APP即可。</p>
+<h2 id="改头换面"><a href="#改头换面" class="headerlink" title="改头换面"></a>改头换面</h2><p>首先，由于是从主APP上拉的分之进行开发，所以这个马甲包的scheme和工程名都没有变化，于是我们首先从这里进行开刀。我们把project名称完全换成了另一个。</p>
+<h2 id="API"><a href="#API" class="headerlink" title="API"></a>API</h2><p>首先base64加密API肯定不能再使用了，苹果都说了，加密特征太过明显。<br>幸好之前已经把所有自定义的API名称都加上了ab_前缀，使得我们写脚本很好识别。我们将所有扫描出的API放到一个plist文件中保存在本地，然后我们建立了6个数组，每个数组中有6个单词，每次从每个数组中随机抽取一个单词。将6个单词拼接成一段方法名保存在另一个plist文件中，当然，在保存前，先去重，如果这个方法名已经用过了，那我们随机再换，这样一共可以生成46656种方法名，对于我们的工程已经够用了。</p>
+<h2 id="图片"><a href="#图片" class="headerlink" title="图片"></a>图片</h2><p>我们利用脚本遍历本地所有png文件，当然你可以自行添加.jpg格式遍历。根据自己的命名规则将所有图片重新命名了一波。另外我们也发现网上有个轮子可以利用shell命令对所有图片资源进行超轻量级的压缩，在不影响图片质量的情况下，改变图片的hash值。当然我们的马甲包中图片没有和主界面相似的，所以的这一步我们没有实践。</p>
+<h2 id="类前缀替换"><a href="#类前缀替换" class="headerlink" title="类前缀替换"></a>类前缀替换</h2><p>这一步主要是更改文件名。程序扫描绝对地址下的所有文件，只要是带”XX”开头的文件都替换成”AB”这种，另外每次替换一个文件都要遍历所有文件，将所有用到这个头文件的文件内容进行更换。</p>
+<h2 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h2><p>类前缀替换有时会有个别没有替换到，我没能定位到问题，但很少，可以手动查找替换</p>
+<h2 id="生成垃圾代码"><a href="#生成垃圾代码" class="headerlink" title="生成垃圾代码"></a>生成垃圾代码</h2><p>我用plist专门搞了一个垃圾方法名，每四个方法生成一个带参数名的方法。暂时每个文件里只生成一个垃圾方法。当然可以多运行几次，就会生成几个垃圾方法</p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>混淆工程我们使用C+OC的混合编程方式。<br>目前已经实现的功能有:<br>1、图片资源修改名字</p>
+<p>2、修改工程名</p>
+<p>3、类前缀修改，如“GD”修改为“IE”，即修改了文件名</p>
+<p>4、混淆随机添加垃圾代码、参数</p>
+<p>5、修改方法名前缀</p>
+<p>6、人工修改部分方法名，人工对重要类中的方法进行打乱排序</p>
+<p>7、(可选)本地图片超轻量级压缩，打乱hash值，新上的马甲包建议修改</p>
+<h3 id="使用方法"><a href="#使用方法" class="headerlink" title="使用方法"></a>使用方法</h3><h4 id="启动参数配置"><a href="#启动参数配置" class="headerlink" title="启动参数配置"></a>启动参数配置</h4><p>先配置启动参数再运行，如图<br><img src="png_1"><br>除第一项必选外其他都非必选。另外第一项启动参数必须放在第一行</p>
+<h4 id="参数解释"><a href="#参数解释" class="headerlink" title="参数解释"></a>参数解释</h4><p>1.工程代码的绝对路径</p>
+<p>2.-modifyProjectName [原工程名]&gt;[新工程名]</p>
+<p>3.-modifyClassNamePrefix [xcodeproj文件的绝对路径，不是pod安装后的那个打开文件] [旧类前缀]&gt;[新类前缀]</p>
+<p>4.-spamCodeOut</p>
+<p>5.-ignoreDirNames [需要忽略的文件夹],[需要忽略的文件夹] 注意，Pods文件夹不在混淆范围内，不需要写</p>
+<p>6.-handleXcassets (混淆图片文件)</p>
+<p>7.-deleteComments (删除多余的空格和注释)</p>
+<p>8.-chageAPIPrefix [旧方法名前缀]&gt;[新方法名前缀] 注意，前缀要有“”才能被识别，如果之前工程中没有xx下划线开头来命名方法的，此项不要勾选</p>
+<p>此工程可以选择混淆概率，修改工程中kPercent数值。<br>实际测试如下<br><img src="ng_2"></p>
+<p>小结<br>目前第三次打回后的工程已经提审，未可知能否过审，会持续更新。脚本也写的很匆忙，后期会进行优化。</p>
+<p>脚本代码<br>脚本–<a target="_blank" rel="noopener" href="https://github.com/JourneyYoung/iOSMixProject">点我传送门</a></p>
+<p>更新<br>目前已过审，亲测脚本可用</p>
+
+	</div>
+	<div class="meta split">
+		
+			<span>本文总阅读量 <span id="busuanzi_value_page_pv"></span> 次</span>
+		
+		<time class="post-date" datetime="2018-02-15T07:09:01.000Z" itemprop="datePublished">2018-02-15</time>
+	</div>
+</article>
+
+<!--评论-->
+
+	
+<div class="ds-thread" data-thread-key="WestPackage" data-title="iOS马甲包混淆方案" data-url="http://example.com/2018/02/15/WestPackage/"></div>
+<script type="text/javascript">
+
+var duoshuoQuery = {short_name:"yumemor"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0]
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+</script>
+
+
+  
+</div>
+
+
+  <svg id="bigTriangleColor" width="100%" height="40" viewBox="0 0 100 102" preserveAspectRatio="none">
+    <path d="M0 0 L50 100 L100 0 Z"></path>
+  </svg>
+
+  
+
+
+  <div class="wrapper"></div>
+
+
+
+
+
+<div class="fat-footer">
+	<div class="wrapper">
+		<div class="layout layout--center">
+			<div class="layout__item palm-mb">
+				<div class="media">
+					<img class="headimg" src='https://avatars.githubusercontent.com/u/15240665?s=460&amp;u=92a27a3e51af2e3bb79883a2a18690a71f8a7232&amp;v=4' alt='Journey'>
+					<div class="media__body">
+						<h4>Journey</h4>
+						<p class='site-description'>浮生若梦,情迷江南</p>
+					</div>
+				</div>
+				<div class="author-contact">
+					<ul>
+						
+							
+							<li>
+				        		<a href="https://weibo.com/u/3852857511" target="_blank">
+				        			
+				        				<i class="iconfont icon-weibo"></i>
+				        			
+				        		</a>
+				        	</li>
+						
+							
+							<li>
+				        		<a href="https://github.com/JourneyYoung" target="_blank">
+				        			
+				        				<i class="iconfont icon-github"></i>
+				        			
+				        		</a>
+				        	</li>
+						
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<footer class="footer" role="contentinfo">
+	<div class="wrapper wrapper--wide split split--responsive">
+		
+			<span>本站总访问量 <span id="busuanzi_value_site_pv"></span> 次, 访客数 <span id="busuanzi_value_site_uv"></span> 人次</span>
+		
+		<span>Theme by <a target="_blank" rel="noopener" href="http://github.com/yumemor">Yumemor</a>. Powered by <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a></span>
+	</div>
+</footer>
+
+	<!-－这里导入了 lib.js 里面涵盖了 jQuery 等框架 所以注释掉-->
+	<!--
+<script src="http://lib.sinaapp.com/js/jquery/2.0/jquery.min.js"></script>
+-->
+	
+<script src="/js/lib.js"></script>
+
+	
+<script src="/js/google-code-prettify/prettify.js"></script>
+
+	
+<script src="/js/module.js"></script>
+
+	
+<script src="/js/script.js"></script>
+
+	
+		<script async src="http://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+	
+	<script type='text/javascript'>
+		//代码高亮
+		$(document).ready(function(){
+	 		$('pre').addClass('prettyprint linenums').attr('style', 'overflow:auto;');
+   			prettyPrint();
+		});
+	</script>
+	</body>
+</html>
